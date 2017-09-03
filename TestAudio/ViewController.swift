@@ -56,6 +56,14 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
         RunLoop.current.add(timer, forMode: RunLoopMode.commonModes)
         timer.fire()
         
+        // bug在这里，参考
+        // https://stackoverflow.com/questions/24369602/using-an-nstimer-in-swift
+        // 以下是一个更简洁的实现方式
+        
+//        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: {{ (_) in
+//            // ...
+//            }})
+//
     }
     
     
