@@ -13,6 +13,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
     
     var recordingSession: AVAudioSession!
     var audioRecorder: AVAudioRecorder!
+    var audioPlayer: AVQueuePlayer!
     var timer: Timer!
     
     override func viewDidLoad() {
@@ -56,19 +57,13 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
         RunLoop.current.add(timer, forMode: RunLoopMode.commonModes)
         timer.fire()
         
-        // bug在这里，参考
-        // https://stackoverflow.com/questions/24369602/using-an-nstimer-in-swift
-        // 以下是一个更简洁的实现方式
-        
-//        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: {{ (_) in
-//            // ...
-//            }})
-//
     }
     
     
     func startRecording() {
-        let audioFilename = getDocumentsDirectory().appendingPathComponent("recording.m4a")
+        let fileName = Date()
+        let fileDirectory = getDocumentsDirectory().appendingPathComponent(String(describing: fileName) + ".m4a")
+        // m4a is a type of mp4, more efficient than mp3
         
         let settings = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
@@ -78,7 +73,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
         ]
         
         do {
-            audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
+            audioRecorder = try AVAudioRecorder(url: fileDirectory, settings: settings)
             audioRecorder.delegate = self
             audioRecorder.record()
             print("Audio recorded")
@@ -104,5 +99,27 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
         }
     }
 
+    @IBAction func play(_ sender: UIButton) {
+        var audioItems: [AVPlayerItem] = []
+        
+        // Get the document directory url
+        let documentsUrl =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        
+        do {
+            // Get the directory contents urls (including subfolders urls)
+            let directoryContents = try FileManager.default.contentsOfDirectory(at: documentsUrl, includingPropertiesForKeys: nil, options: [])
+            print(directoryContents)
+            for url in directoryContents {
+                audioItems.append(AVPlayerItem(url: url))
+            }
+
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }
+        
+        audioPlayer = AVQueuePlayer(items: audioItems)
+        audioPlayer.play()
+    }
+    
 }
 
