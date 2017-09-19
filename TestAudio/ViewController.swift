@@ -14,7 +14,28 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
     var recordingSession: AVAudioSession!
     var audioRecorder: AVAudioRecorder!
     var audioPlayer: AVQueuePlayer!
-    var timer: Timer!
+    var dpLink: CADisplayLink!
+    
+    //    var timer: Timer!  //NSTimer
+    
+    //    // CADisplayLink 官方文档示例
+    //    func createDisplayLink() {
+    //        let displaylink = CADisplayLink(target: self,
+    //                                        selector: #selector(step))
+    //
+    //        displaylink.add(to: .current,
+    //                        forMode: .defaultRunLoopMode)
+    //    }
+    //
+    //    @objc func step(displaylink: CADisplayLink) {
+    //        print(displaylink.timestamp)
+    //    }
+    
+    
+    //    // oc CADisplaylink
+    //    CADisplayLink *link = [CADisplayLink displayLinkWithTarget:self selector:@selector(testDisplayLink)];
+    //    link.paused = NO;
+    //    [link addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     
     override func viewDidLoad() {
         let recordingSession = AVAudioSession.sharedInstance()
@@ -39,23 +60,46 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
         let documentsDirectory = paths[0]
         return documentsDirectory
     }
-
+    
+    @objc func update(){
+        print("recording started.")
+        recordAndPrint()
+    }
+    
+    func startDpLink(){
+        dpLink = CADisplayLink(target: self, selector: #selector(update))
+        dpLink.preferredFramesPerSecond = 60
+        dpLink.add(to: RunLoop.current, forMode: RunLoopMode.commonModes)
+        dpLink.isPaused = false
+    }
+    
+    func stopDpLink(){
+        dpLink.invalidate()
+    }
+    
+    
     @IBAction func Record(_ sender: UIButton) {
         
-        // stops recording if recording is ongoing
-        if timer != nil {
-            if timer.isValid {
-                self.timer.invalidate()
-                return
-            }
+        if dpLink != nil {
+            stopDpLink()
         }
+        startDpLink()
         
-        // starts recording if no recording is going on
-        timer = Timer(timeInterval: 1, repeats: true, block: { (_) in
-            self.recordAndPrint()
-        })
-        RunLoop.current.add(timer, forMode: RunLoopMode.commonModes)
-        timer.fire()
+        
+        //        // stops recording if recording is ongoing
+        //        if timer != nil {
+        //            if timer.isValid {
+        //                self.timer.invalidate()
+        //                return
+        //            }
+        //        }
+        //
+        //        // starts recording if no recording is going on
+        //        timer = Timer(timeInterval: 1, repeats: true, block: { (_) in
+        //            self.recordAndPrint()
+        //        })
+        //        RunLoop.current.add(timer, forMode: RunLoopMode.commonModes)
+        //        timer.fire()
         
     }
     
@@ -77,12 +121,12 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
             audioRecorder.delegate = self
             audioRecorder.record()
             print("Audio recorded")
-    
+            
         } catch {
             print("Failed to initialize recorder")
         }
     }
-        
+    
     func recordAndPrint() {
         if audioRecorder == nil {
             startRecording()
@@ -98,21 +142,21 @@ class ViewController: UIViewController, AVAudioRecorderDelegate {
             print("Record unsuccessful")
         }
     }
-
+    
     @IBAction func play(_ sender: UIButton) {
         var audioItems: [AVPlayerItem] = []
         
         // Get the document directory url
-        let documentsUrl =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         
         do {
             // Get the directory contents urls (including subfolders urls)
             let directoryContents = try FileManager.default.contentsOfDirectory(at: documentsUrl, includingPropertiesForKeys: nil, options: [])
-            print(directoryContents)
+            // print(directoryContents)
             for url in directoryContents {
                 audioItems.append(AVPlayerItem(url: url))
             }
-
+            
         } catch let error as NSError {
             print(error.localizedDescription)
         }
